@@ -18,44 +18,39 @@ namespace EmoteDownloader
             RootCommand rootCommand = new RootCommand(
                 description: "Bulk download emotes from Twitch/BTTV/FFZ/7TV"
             );
-            Option platform = new Option<string?>(
+            Option platform = new Option<string>(
                 aliases: new string[] { "-p", "--platform" },
                 description: "Platform to download from. Valid values: twitch, bttv, ffz, 7tv"
             );
-            Option client_id = new Option<string?>(
-                aliases: new string[] { "-cid", "--client-id" },
+            Option client_id = new Option<string>(
+                aliases: new string[] { "--client_id" },
                 description: "Client ID, not required if token is provided or platform is not twitch and channel_ids is provided"
             );
-            Option client_secret = new Option<string?>(
-                aliases: new string[] { "-cs", "--client-secret" },
+            Option client_secret = new Option<string>(
+                aliases: new string[] { "--client_secret" },
                 description: "Client Secret, not required if token is provided or platform is not twitch and channel_ids is provided"
             );
-            Option token = new Option<string?>(
+            Option token = new Option<string>(
                 aliases: new string[] { "-t", "--token" },
                 description: "Token, not required if client ID and secret are provided or platform is not twitch and channel_ids is provided"
             );
-            Option channel_ids = new Option<string?>(
-                aliases: new string[] { "-ci", "--channel-ids" },
+            Option channel_ids = new Option<string>(
+                aliases: new string[] {"--channel_ids" },
                 description: "Channel IDs, separated by commas. Not required if channel names are provided but"
             );
-            Option channel_names = new Option<string?>(
-                aliases: new string[] { "-cn", "--channel-names" },
+            Option channel_names = new Option<string>(
+                aliases: new string[] {"--channel_names" },
                 description: "Channel Names, separated by commas. Not required if channel IDs are provided"
             );
-            Option output_dir = new Option<string?>(
+            Option output_dir = new Option<string>(
                 defaultValue: Path.Combine(Directory.GetCurrentDirectory(), "emotes"),
-                aliases: new string[] { "-o", "--output-dir" },
+                aliases: new string[] { "-o", "--output_dir" },
                 description: "Output directory, will be created if it doesn't exist and defaults to current directory if not provided"
             );
             Option version = new Option<bool>(
                 defaultValue: false,
                 aliases: new string[] { "-v", "--version" },
                 description: "Print version"
-            );
-            Option help = new Option<bool>(
-                defaultValue: false,
-                aliases: new string[] { "-?", "-h", "--help" },
-                description: "Print help"
             );
             Option verbose = new Option<bool>(
                 defaultValue: false,
@@ -70,23 +65,17 @@ namespace EmoteDownloader
             rootCommand.AddOption(channel_names);
             rootCommand.AddOption(output_dir);
             rootCommand.AddOption(version);
-            rootCommand.AddOption(help);
             rootCommand.AddOption(verbose);
 
-            Action<string?, string?, string?, string?, string?, string?, string?, bool, bool, bool, IConsole> downloadEmotes = async (platform, client_id, client_secret, token, channel_ids, channel_names, output_dir, verbose, help, version, console) =>
+            Func<string, string, string, string, string, string, string, bool, bool, IConsole, int> downloadEmotes = (platform, client_id, client_secret, token, channel_ids, channel_names, output_dir, verbose, version, console) =>
             {
                 #region Validation
                 bool useNames = false;
                 bool tokenRequired = true;
-                if (help)
-                {
-                    rootCommand.Invoke(new string[] { "--help" });
-                    return;
-                }
                 if (version)
                 {
                     console.Out.Write($"\nEmoteDownloader v{Program.version}");
-                    return;
+                    return 2;
                 }
                 if (verbose)
                 {
@@ -100,28 +89,27 @@ namespace EmoteDownloader
                     console.Out.Write($"Channel Names: {channel_names} <-- Is Null {channel_names == null}\n");
                     console.Out.Write($"Output Directory: {output_dir} <-- Is Null {output_dir == null}\n");
                     console.Out.Write($"Verbose: {verbose} <-- Is Null {verbose == null}\n");
-                    console.Out.Write($"Help: {help} <-- Is Null {help == null}\n");
                     console.Out.Write($"Version: {version} <-- Is Null {version == null}\n");
                 }
                 if (platform == null)
                 {
                     console.Error.Write("Platform is required\n");
-                    return;
+                    return 1;
                 }
                 else if (platform.ToLower() != "twitch" && platform.ToLower() != "bttv" && platform.ToLower() != "ffz" && platform.ToLower() != "7tv")
                 {
                     console.Error.Write($"Invalid platform: {platform}\n");
-                    return;
+                    return 1;
                 }
-                if ((platform.ToLower() == "twitch" || channel_ids == null) && ((client_id == null || client_secret == null) && token == null))
+                if ((platform.ToLower() == "twitch" || channel_ids == null) && (client_secret == null && token == null) && client_id == null)
                 {
-                    console.Error.Write("Client ID and secret or token is required for Twitch or when using channel names\n");
-                    return;
+                    console.Error.Write("Client ID and Client secret or token and Client ID is required for Twitch or when using channel names\n");
+                    return 1;
                 }
                 if (channel_ids == null && channel_names == null)
                 {
                     console.Error.Write("Channel IDs or channel names is required\n");
-                    return;
+                    return 1;
                 }
                 if (channel_ids != null && channel_names != null)
                 {
@@ -150,12 +138,12 @@ namespace EmoteDownloader
                 if (channel_ids != null && channel_ids.Split(',').Length == 0)
                 {
                     console.Error.Write("Channel IDs cannot be empty\n");
-                    return;
+                    return 1;
                 }
                 if (channel_names != null && channel_names.Split(',').Length == 0)
                 {
                     console.Error.Write("Channel names cannot be empty\n");
-                    return;
+                    return 1;
                 }
                 if (output_dir == null)
                 {
@@ -190,11 +178,11 @@ namespace EmoteDownloader
                     {
                         console.Out.Write("Token not provided, using client ID and secret to get a token\n");
                     }
-                    token = await TwitchGetToken(client_id, client_secret);
+                    token = TwitchGetToken(client_id, client_secret).GetAwaiter().GetResult();
                     if (token == null)
                     {
                         console.Error.Write("Failed to get token\nPlease ensure that client ID and secret are correct\n");
-                        return;
+                        return 3;
                     }
                     if (verbose)
                     {
@@ -208,11 +196,11 @@ namespace EmoteDownloader
                         console.Out.Write($"Getting channel IDs from channel names\n");
                     }
                     string url = "https://api.twitch.tv/helix/users?login=" + channel_names.Replace(",", "&login=");
-                    string userJson = await GetApiJson(url, token, client_id, true);
+                    string userJson = GetApiJson(url, token, client_id, true).GetAwaiter().GetResult();
                     if (userJson == null)
                     {
                         console.Error.Write("Failed to get channel IDs due to an API error\n");
-                        return;
+                        return 3;
                     }
                     if (verbose)
                     {
@@ -239,7 +227,6 @@ namespace EmoteDownloader
 
                 //TO DO: Add support for animated emotes (v1.1.0)
                 //Extend Dictionary to <Emote, bool> to indicate if it's animated
-
 
 
                 if (verbose)
@@ -270,15 +257,15 @@ namespace EmoteDownloader
                     {
                         url = $"https://api.7tv.app/v2/users/{channel_id}/emotes";
                     }
-                    string emotesJson = await GetApiJson(url, token, client_id);
+                    string emotesJson = GetApiJson(url, token, client_id, platform.ToLower() == "twitch").GetAwaiter().GetResult();
                     if (emotesJson == null)
                     {
                         console.Error.Write("Failed to get emotes due to an API error\n");
-                        return;
+                        return 3;
                     }
                     if (verbose)
                     {
-                        console.Out.Write($"Got emotes for channel ID: {channel_id}\n");
+                        console.Out.Write($"Got emotesJson for channel ID: {channel_id}\n");
                     }
                     JObject emotesObj;
                     if (platform.ToLower() == "ffz" || platform.ToLower() == "7tv")
@@ -354,6 +341,7 @@ namespace EmoteDownloader
                 console.Out.Write("Download started\n");
                 Task.WaitAll(downloadEmotesAsync(emotes, output_dir).ToArray());
                 console.Out.Write("Download complete!\n");
+                return 0;
             };
             rootCommand.Handler = CommandHandler.Create(downloadEmotes);
             return await rootCommand.InvokeAsync(args);
@@ -404,9 +392,35 @@ namespace EmoteDownloader
                 {
                     using (var response = await client.SendAsync(request))
                     {
+                        return await response.Content.ReadAsStringAsync();
                         if (response.IsSuccessStatusCode)
                         {
                             return await response.Content.ReadAsStringAsync();
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                }
+            }
+        }
+        private static Task<string> GetApiJsonSync(string url, string token, string clientID, bool twitch = false)
+        {
+            using (var request = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                if (twitch)
+                {
+                    request.Headers.Add("Authorization", "Bearer " + token);
+                    request.Headers.Add("Client-Id", clientID);
+                }
+                using (var client = new HttpClient())
+                {
+                    using (var response = client.SendAsync(request).Result)
+                    {
+                        if (response.IsSuccessStatusCode)
+                        {
+                            return response.Content.ReadAsStringAsync();
                         }
                         else
                         {
@@ -421,7 +435,7 @@ namespace EmoteDownloader
             foreach (var item in d)
             {
                 WebClient wc = new WebClient();
-                taskList.Add(wc.DownloadFileTaskAsync(item.Key, Path.Combine(output, item.Value + ".png")));
+                taskList.Add(wc.DownloadFileTaskAsync(item.Value, Path.Combine(output, item.Key + ".png")));
             }
             return taskList;
         }

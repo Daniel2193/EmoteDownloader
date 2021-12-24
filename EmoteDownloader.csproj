@@ -3,6 +3,12 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
+    <Authors>Daniel2193</Authors>
+    <Company />
+    <Description>Bulk download emotes from Twitch/BTTV/FFZ/7TV</Description>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesInSingleFile>true</IncludeNativeLibrariesInSingleFile>
+    <runtimeIdentifier>win-x64</runtimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
