@@ -12,7 +12,7 @@ namespace EmoteDownloader
 {
     class Program
     {
-        private static string version = "1.0.1";
+        private static string version = "1.0.2";
         public static async Task<int> Main(params string[] args)
         {
             RootCommand rootCommand = new RootCommand(
@@ -81,15 +81,15 @@ namespace EmoteDownloader
                 {
                     console.Out.Write("Enabled verbose output\n");
                     //write all parameters to console
-                    console.Out.Write($"Platform: {platform} <-- Is Null {platform == null}\n");
-                    console.Out.Write($"Client ID: {client_id} <-- Is Null {client_id == null}\n");
-                    console.Out.Write($"Client Secret: {client_secret} <-- Is Null {client_secret == null}\n");
-                    console.Out.Write($"Token: {token} <-- Is Null {token == null}\n");
-                    console.Out.Write($"Channel IDs: {channel_ids} <-- Is Null {channel_ids == null}\n");
-                    console.Out.Write($"Channel Names: {channel_names} <-- Is Null {channel_names == null}\n");
-                    console.Out.Write($"Output Directory: {output_dir} <-- Is Null {output_dir == null}\n");
-                    console.Out.Write($"Verbose: {verbose} <-- Is Null {verbose == null}\n");
-                    console.Out.Write($"Version: {version} <-- Is Null {version == null}\n");
+                    console.Out.Write($"Platform: {platform}\n");
+                    console.Out.Write($"Client ID: {client_id}\n");
+                    console.Out.Write($"Client Secret: {client_secret}\n");
+                    console.Out.Write($"Token: {token}\n");
+                    console.Out.Write($"Channel IDs: {channel_ids}\n");
+                    console.Out.Write($"Channel Names: {channel_names}\n");
+                    console.Out.Write($"Output Directory: {output_dir}\n");
+                    console.Out.Write($"Verbose: {verbose}\n");
+                    console.Out.Write($"Version: {version}\n");
                 }
                 if (platform == null)
                 {
@@ -282,14 +282,16 @@ namespace EmoteDownloader
                         {
                             foreach (var emote in emotesObj["channelEmotes"])
                             {
-                                emotes.Add(emote["code"].ToString(), bttvLink(emote["id"].ToString()));
+                                if(!emotes.ContainsKey(emote["code"].ToString()))
+                                    emotes.Add(emote["code"].ToString(), bttvLink(emote["id"].ToString()));
                             }
                         }
                         if (emotesObj["sharedEmotes"] != null)
                         {
                             foreach (var emote in emotesObj["sharedEmotes"])
                             {
-                                emotes.Add(emote["code"].ToString(), bttvLink(emote["id"].ToString()));
+                                if (!emotes.ContainsKey(emote["code"].ToString()))
+                                    emotes.Add(emote["code"].ToString(), bttvLink(emote["id"].ToString()));
                             }
                         }
                     }
@@ -333,7 +335,8 @@ namespace EmoteDownloader
                             else if(platform.ToLower() == "ffz"){
                                 link = $"https://cdn.betterttv.net/frankerfacez_emote/{emote["id"]}/4";
                             }
-                            emotes.Add(emote["name"].ToString(), link);
+                            if (!emotes.ContainsKey(emote["code"].ToString()))
+                                emotes.Add(emote["name"].ToString(), link);
                         }
                     }
                 }
