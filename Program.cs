@@ -12,16 +12,16 @@ namespace EmoteDownloader
 {
     class Program
     {
-        private static string version = "1.1.0";
+        private static string version = "1.1.1";
         class Emote
         {
             public string url = "";
-            public bool is_animated = false;
+            public string fileType = "png";
 
-            public Emote(string url = "", bool is_animated = false)
+            public Emote(string url = "", string fileType = "png")
             {
                 this.url = url;
-                this.is_animated = is_animated;
+                this.fileType = fileType;
             }
         }
         public static async Task<int> Main(params string[] args)
@@ -91,7 +91,6 @@ namespace EmoteDownloader
                 if (verbose)
                 {
                     console.Out.Write("Enabled verbose output\n");
-                    //write all parameters to console
                     console.Out.Write($"Platform: {platform}\n");
                     console.Out.Write($"Client ID: {client_id}\n");
                     console.Out.Write($"Client Secret: {client_secret}\n");
@@ -288,7 +287,7 @@ namespace EmoteDownloader
                             {
                                 if (!emotes.ContainsKey(emote["code"].ToString()))
                                 {
-                                    emotes.Add(emote["code"].ToString(), new Emote(bttvLink(emote["id"].ToString()), (emote["imageType"].ToString().Equals("gif"))));
+                                    emotes.Add(emote["code"].ToString(), new Emote(bttvLink(emote["id"].ToString()), emote["imageType"].ToString()));
                                 }
                             }
                         }
@@ -297,7 +296,7 @@ namespace EmoteDownloader
                             foreach (var emote in emotesObj["sharedEmotes"])
                             {
                                 if (!emotes.ContainsKey(emote["code"].ToString()))
-                                    emotes.Add(emote["code"].ToString(), new Emote(bttvLink(emote["id"].ToString()), (emote["imageType"].ToString().Equals("gif"))));
+                                    emotes.Add(emote["code"].ToString(), new Emote(bttvLink(emote["id"].ToString()), emote["imageType"].ToString()));
                             }
                         }
                     }
@@ -305,11 +304,13 @@ namespace EmoteDownloader
                     {
                         foreach (var emote in emotesObj["data"])
                         {
-                            Emote emote_obj = new Emote("", false);
+                            Emote emote_obj = new Emote("", "");
                             if (platform.ToLower() == "twitch")
                             {
                                 if(emote["format"].ToString().Contains("animated"))
-                                    emote_obj.is_animated = true;
+                                    emote_obj.fileType = "gif";
+                                else
+                                    emote_obj.fileType = "png";
                                 if (emote["images"]["url_4x"] != null)
                                 {
                                     emote_obj.url = emote["images"]["url_4x"].ToString();
@@ -330,6 +331,7 @@ namespace EmoteDownloader
                                     }
                                     continue;
                                 }
+                                emote_obj.url = emote_obj.url.Replace("/static/", "/default/");
                             }
                             else if (platform.ToLower() == "7tv")
                             {
@@ -342,11 +344,16 @@ namespace EmoteDownloader
                                             emote_obj.url = item[1].ToString();
                                         }
                                     }
+                                    if(emote["mime"] != null)
+                                    {
+                                        emote_obj.fileType = emote["mime"].ToString().Replace("image/", "");
+                                    }
                                 }
                             }
                             else if (platform.ToLower() == "ffz")
                             {
-                                emote_obj.is_animated = emote["imageType"].ToString().Equals("gif");
+                                
+                                emote_obj.fileType = emote["imageType"].ToString();
                                 emote_obj.url = $"https://cdn.betterttv.net/frankerfacez_emote/{emote["id"]}/4";
                             }
                             if (!emotes.ContainsKey(emote["name"].ToString()))
@@ -410,39 +417,6 @@ namespace EmoteDownloader
                     using (var response = await client.SendAsync(request))
                     {
                         return await response.Content.ReadAsStringAsync();
-                        if (response.IsSuccessStatusCode)
-                        {
-                            return await response.Content.ReadAsStringAsync();
-                        }
-                        else
-                        {
-                            return null;
-                        }
-                    }
-                }
-            }
-        }
-        private static Task<string> GetApiJsonSync(string url, string token, string clientID, bool twitch = false)
-        {
-            using (var request = new HttpRequestMessage(HttpMethod.Get, url))
-            {
-                if (twitch)
-                {
-                    request.Headers.Add("Authorization", "Bearer " + token);
-                    request.Headers.Add("Client-Id", clientID);
-                }
-                using (var client = new HttpClient())
-                {
-                    using (var response = client.SendAsync(request).Result)
-                    {
-                        if (response.IsSuccessStatusCode)
-                        {
-                            return response.Content.ReadAsStringAsync();
-                        }
-                        else
-                        {
-                            return null;
-                        }
                     }
                 }
             }
@@ -453,7 +427,7 @@ namespace EmoteDownloader
             foreach (var item in d)
             {
                 WebClient wc = new WebClient();
-                taskList.Add(wc.DownloadFileTaskAsync(item.Value.url, Path.Combine(output, item.Key + (item.Value.is_animated ? ".gif" : ".png"))));
+                taskList.Add(wc.DownloadFileTaskAsync(item.Value.url, Path.Combine(output, item.Key + "." + item.Value.fileType)));
             }
             return taskList;
         }
