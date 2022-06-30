@@ -23,3 +23,9 @@ Options:
   --verbose                          Enables verbose output, intended for debugging purposes
   --help                             Prints this
 ```
+
+# How to get a Client_ID / Client_Secret?
+
+- Go to https://dev.twitch.tv/console/apps and create a new Application
+
+- Make sure to save the Client_Secret somewhere since you cannot view it again without resetting it
