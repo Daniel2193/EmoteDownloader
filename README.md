@@ -21,4 +21,5 @@ Options:
                                      directory if not provided
   -v, --version                      Print version
   --verbose                          Enables verbose output, intended for debugging purposes
+  --help                             Prints this
 ```
