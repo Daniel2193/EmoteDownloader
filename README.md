@@ -19,8 +19,7 @@ Options:
                                      twitch and channel_ids is provided
   --channel_ids <channel_ids>        Channel IDs, separated by commas. Not required if channel names are provided but
   --channel_names <channel_names>    Channel Names, separated by commas. Not required if channel IDs are provided
-  -o, --output_dir <o>               Output directory, will be created if it doesn't exist and defaults to current
-                                     directory if not provided
+  -o, --output_dir <o>               Output directory, will be created if it doesn't exist and defaults ./emotes/ if not provided
   -v, --version                      Print version
   --verbose                          Enables verbose output, intended for debugging purposes
   --help                             Prints this
