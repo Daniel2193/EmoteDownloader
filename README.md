@@ -25,6 +25,12 @@ Options:
   --help                             Prints this
 ```
 
+# Usage samples
+```
+EmoteDownloader.exe -p twitch --channel_names SmallAnt --client_id YOUR_CLIENT_ID --client_secret YOUR_CLIENT_SECRET
+EmoteDownloader.exe -p bttv --channel_ids 117349875
+```
+
 # How to get a Client_ID / Client_Secret?
 
 - Go to https://dev.twitch.tv/console/apps and create a new Application
