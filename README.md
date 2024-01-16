@@ -3,6 +3,7 @@ Bulk download emotes from Twitch/BTTV/FFZ/7TV
 
 License: GPL-3.0
 
+# V2 is in development (includes UI)
 
 # Usage
 ```
