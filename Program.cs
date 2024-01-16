@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.CommandLine.IO;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -12,7 +13,7 @@ namespace EmoteDownloader
 {
     class Program
     {
-        private static string version = "1.1.1";
+        private static string version = "1.1.2";
         class Emote
         {
             public string url = "";
@@ -254,11 +255,11 @@ namespace EmoteDownloader
                     }
                     else if (platform.ToLower() == "ffz")
                     {
-                        url = $"https://api.betterttv.net/3/cached/frankerfacez/users/twitch/{channel_id}";
+                        url = $"https://api.frankerfacez.com/v1/room/id/{channel_id}";
                     }
                     else if (platform.ToLower() == "7tv")
                     {
-                        url = $"https://api.7tv.app/v2/users/{channel_id}/emotes";
+                        url = $"https://7tv.io/v3/users/twitch/{channel_id}";
                     }
                     string emotesJson = GetApiJson(url, token, client_id, platform.ToLower() == "twitch").GetAwaiter().GetResult();
                     if (emotesJson == null)
@@ -270,16 +271,29 @@ namespace EmoteDownloader
                     {
                         console.Out.Write($"Got emotesJson for channel ID: {channel_id}\n");
                     }
-                    JObject emotesObj;
-                    if (platform.ToLower() == "ffz" || platform.ToLower() == "7tv")
+                    JObject emotesObj = JObject.Parse(emotesJson);
+                    if (platform.ToLower() == "ffz")
                     {
-                        emotesObj = JObject.Parse("{\"data\": " + emotesJson + "}");
-                    }
-                    else
+                        foreach(var emote in emotesObj["sets"].First.First["emoticons"])
+                        {
+                            emotes.Add(emote["name"].ToString(), new Emote($"https://cdn.frankerfacez.com/emote/{emote["id"].ToString()}/4"));
+                        } 
+                    } 
+                    else if(platform.ToLower() == "7tv")
                     {
-                        emotesObj = JObject.Parse(emotesJson);
+                        if (emotesObj["error"] != null)
+                        {
+                            continue;
+                        }
+                        if (emotesObj["emote_set"]["emotes"] != null)
+                        {
+                            foreach(var emote in emotesObj["emote_set"]["emotes"])
+                            {
+                                emotes.Add(emote["name"].ToString(), new Emote($"https://cdn.7tv.app/emote/{emote["id"]}/4x.webp", "webp"));
+                            }
+                        }
                     }
-                    if (platform.ToLower() == "bttv")
+                    else if (platform.ToLower() == "bttv")
                     {
                         if (emotesObj["channelEmotes"] != null)
                         {
